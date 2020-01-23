@@ -125,7 +125,8 @@ module emu
 
 assign ADC_BUS  = 'Z;
 assign USER_OUT = '1;
-assign {UART_RTS, UART_TXD, UART_DTR} = 0;
+//assign {UART_RTS, UART_TXD, UART_DTR} = 0;
+assign { UART_DTR} = 0;
 assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = 0; 
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 
@@ -289,7 +290,9 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .VDNUM(2)) hps_io
 	.ps2_kbd_led_use(3'b001),
 	.ps2_kbd_led_status({2'b00, capslock}),
 
-	.ps2_mouse(ps2_mouse)
+	.ps2_mouse(ps2_mouse),
+	.uart_mode(16'b000_11111_000_11111) // AJS - is this correct
+
 );
 
 wire  [1:0] cpu_busstate;
@@ -448,7 +451,12 @@ dataController_top dc0
 	.ps2_key(ps2_key),
 	.capslock(capslock),
 	.ps2_mouse(ps2_mouse),
-	.serialIn(0),
+
+	.rxd(UART_RXD),
+	.txd(UART_TXD),
+	.cts(UART_CTS),
+	.rts(UART_RTS),
+	
 
 	// video
 	._hblank(_hblank),

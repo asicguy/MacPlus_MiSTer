@@ -40,8 +40,16 @@ module dataController_top(
 	input [24:0] ps2_mouse,
 
 	// serial:
-	input serialIn, 
-	output serialOut,	
+	input   rxd,
+	output  txd,
+	input   cts,
+       	/* normally wired to device DTR output
+                                * on Mac cables. That same line is also
+                                * connected to the TRxC input of the SCC
+                                * to do fast clocking but we don't do that
+                                * here
+                                */
+	output  rts, /* on a real mac this activates line*/
 
 	// video:
 	input _hblank,
@@ -133,7 +141,7 @@ assign _cpuIPL =
 	3'b111;
 
 // Serial port
-assign serialOut = 0;
+//assign serialOut = 0;
 
 // CPU-side data output mux
 always @(*) begin
@@ -260,7 +268,11 @@ scc s
 	._irq(_sccIrq),
 	.dcd_a(mouseX1),
 	.dcd_b(mouseY1),
-	.wreq(sccWReq)
+	.wreq(sccWReq),
+	.rxd(rxd),
+	.txd(txd),
+	.cts(cts),
+	.rts(rts)
 );
 
 // Mouse

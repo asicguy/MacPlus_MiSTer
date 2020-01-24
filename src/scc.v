@@ -266,19 +266,18 @@ module scc
 	 */
 	always@(posedge clk or posedge reset_hw) begin
 		if (reset_hw) begin
-		  wr8_a <= 0;
-	          wr8_wr_a <= 1'b0;
+			wr8_a <= 0;
+			wr8_wr_a <= 1'b0;
 		end
-		else if (cen && (wreg_a ) && rindex == 8)
-		begin
-	          wr8_wr_a <= 1'b1;
-		  wr8_a <= wdata;			
+		else if (cen && (wreg_a ) && rindex == 8) begin
+			wr8_wr_a <= 1'b1;
+			wr8_a <= wdata;			
 		end
-		else
-		begin
+		else begin
 	          wr8_wr_a <= 1'b0;
 		end
 	end
+
 	always@(posedge clk or posedge reset_hw) begin
 		if (reset_hw) begin
 		  wr8_b <= 0;
@@ -551,8 +550,10 @@ wire frame_err_a; // do we need a register and to keep this?
 	 * it's not a permanent state. For now keep it clear. Will have to fix that.
 	* TODO: AJS - look at tx and interrupt logic
 	 */
-	assign rx_irq_pend_a = 0;
-	assign tx_irq_pend_a = 0 /*& wr1_a[1]*/; /* Tx always empty for now */
+	 wire wreq_n;
+	assign rx_irq_pend_a =0;
+	//assign tx_irq_pend_a = 0 /*& wr1_a[1]*/; /* Tx always empty for now */
+	assign tx_irq_pend_a =  wr1_a[1]; /* Tx always empty for now */
 	assign ex_irq_pend_a = ex_irq_ip_a;
 	assign rx_irq_pend_b = 0;
 	assign tx_irq_pend_b = 0 /*& wr1_b[1]*/; /* Tx always empty for now */
@@ -761,7 +762,7 @@ rxuart rxuart_a (
 	.i_reset(reset_hw), 
 	.i_setup(uart_setup_rx_a), 
 	.i_uart_rx(rxd), 
-	.o_wr(wreq), // TODO -- check on this flag
+	.o_wr(wreq_n), // TODO -- check on this flag
 	.o_data(data_a),   // TODO we need to save this off only if wreq is set, and mux it into data_a in the right spot
 	.o_break(break_a),
    .o_parity_err(parity_err_a), 
@@ -781,5 +782,8 @@ txuart txuart_a
 	.o_busy()); // TODO -- do we need this busy line?? probably 
 
 	assign rts = 1;
+	assign wreq=1;
 
+	
+	
 endmodule

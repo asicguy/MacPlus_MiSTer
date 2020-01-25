@@ -440,11 +440,11 @@ module scc
 
 	/* RR0 */
 	assign rr0_a = { 1'b0, /* Break */
-			 1'b1, /* Tx Underrun/EOM */
+			 1'b1, /* Tx Underrun/EOM */ // AJS sswitched this
 			 1'b0, /* CTS */
 			 1'b0, /* Sync/Hunt */
 			 wr15_a[3] ? dcd_latch_a : dcd_a, /* DCD */
-			 1'b1, /* Tx Empty */
+			 ~tx_busy_a, /* Tx Empty */ // AJS - switched this
 			 1'b0, /* Zero Count */
 			 1'b0  /* Rx Available */
 			 };
@@ -552,8 +552,8 @@ wire frame_err_a; // do we need a register and to keep this?
 	 */
 	 wire wreq_n;
 	assign rx_irq_pend_a =0;
-	//assign tx_irq_pend_a = 0 /*& wr1_a[1]*/; /* Tx always empty for now */
-	assign tx_irq_pend_a =  wr1_a[1]; /* Tx always empty for now */
+	assign tx_irq_pend_a = 0 /*& wr1_a[1]*/; /* Tx always empty for now */
+	//assign tx_irq_pend_a =  wr1_a[1]; /* Tx always empty for now */
 	assign ex_irq_pend_a = ex_irq_ip_a;
 	assign rx_irq_pend_b = 0;
 	assign tx_irq_pend_b = 0 /*& wr1_b[1]*/; /* Tx always empty for now */
@@ -752,34 +752,34 @@ wr_3_a[7:6]  -- bits per char
 
 //reg [23:0] baud_divid_speed_a = 24'd1088;
 reg [23:0] baud_divid_speed_a = 24'd544;
-
+wire tx_busy_a;
 //wire [30:0] uart_setup_rx_a = { 1'b0, bit_per_char_a, 1'b0, parity_ena_a, 1'b0, parity_even_a, baud_divid_speed_a  } ;
 //wire [30:0] uart_setup_tx_a = { 1'b0, bit_per_char_a, 1'b0, parity_ena_a, 1'b0, parity_even_a, baud_divid_speed_a  } ;
 wire [30:0] uart_setup_rx_a = { 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, baud_divid_speed_a  } ;
 wire [30:0] uart_setup_tx_a = { 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, baud_divid_speed_a  } ;
 rxuart rxuart_a (
 	.i_clk(clk), 
-	.i_reset(reset_hw), 
+	.i_reset(reset_a), 
 	.i_setup(uart_setup_rx_a), 
 	.i_uart_rx(rxd), 
 	.o_wr(wreq_n), // TODO -- check on this flag
 	.o_data(data_a),   // TODO we need to save this off only if wreq is set, and mux it into data_a in the right spot
 	.o_break(break_a),
-   .o_parity_err(parity_err_a), 
+	.o_parity_err(parity_err_a), 
 	.o_frame_err(frame_err_a), 
 	.o_ck_uart()
 	);
 txuart txuart_a
 	(
 	.i_clk(clk), 
-	.i_reset(reset_hw), 
+	.i_reset(reset_a), 
 	.i_setup(uart_setup_tx_a), 
 	.i_break(1'b0), 
 	.i_wr(wr8_wr_a),   // TODO -- we need to send data when we get the register command i guess???
 	.i_data(wr8_a),
-   .i_cts_n(~cts), 
+	.i_cts_n(~cts), 
 	.o_uart_tx(txd), 
-	.o_busy()); // TODO -- do we need this busy line?? probably 
+	.o_busy(tx_busy_a)); // TODO -- do we need this busy line?? probably 
 
 	assign rts = 1;
 	assign wreq=1;

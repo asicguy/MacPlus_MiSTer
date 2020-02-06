@@ -166,6 +166,7 @@ pll pll
 	.refclk(CLK_50M),
 	.rst(0),
 	.outclk_0(clk_sys),
+	//.outclk_1(clk_sys_2),
 	.locked(pll_locked)
 );
 
@@ -300,11 +301,86 @@ wire        cpu_clkena = cep && (cpuBusControl || (cpu_busstate == 2'b01));
 reg  [15:0] cpuDataIn;
 always @(posedge clk_sys) if(cel && cpuBusControl && ~cpu_busstate[0] && _cpuRW) cpuDataIn <= dataControllerDataOut;
 
+`define NEWCPU
+`ifdef NEWCPU
+reg clkdiv;
+reg phi1;
+reg phi2;
+/* always @(posedge clk_sys) begin
+  clkdiv <= !clkdiv;
+  phi1 <= 1'b0;
+  phi2 <= 1'b0;
+
+  if (!clkdiv) phi1 <= 1'b1;
+  else phi2 <= 1'b1;
+end
+*/
+always @(posedge cep ) begin
+  clkdiv <= !clkdiv;
+  phi1 <= 1'b0;
+  phi2 <= 1'b0;
+
+  if (!clkdiv) phi1 <= 1'b1;
+  else phi2 <= 1'b1;
+end
+(*keep*) wire fx68k_clk = cep;
+(*keep*) wire fx68k_phi1 = phi1;
+(*keep*) wire fx68k_phi2 = phi2;
+fx68k FX68K(
+                .clk(fx68k_clk),
+		
+                .extReset(~_cpuReset),
+                .pwrUp(~_cpuReset),
+               
+	        .oRESETn(_cpuResetOut),
+
+                .enPhi1(fx68k_phi1),
+                .enPhi2(fx68k_phi2),
+                
+                .eRWn(wr_o),
+                .ASn(as_o),
+                .UDSn(_cpuUDS),
+                .LDSn(_cpuLDS),
+                
+                .BGn(1'b1),
+                .BRn(1'b1),
+                .BGACKn(1'b1),
+                
+                .DTACKn(1'b0), // AJS -- FIX THIS?
+                
+                .BERRn(1'b1),
+                
+                .IPL0n(_cpuIPL[0]),
+                .IPL1n(_cpuIPL[1]),
+                .IPL2n(_cpuIPL[2]),
+
+	.FC0(fc_o[0]),
+	.FC1(fc_o[1]),
+	.FC2(fc_o[2]), 
+	.VPAn(~&fc_o),
+		
+                .iEdb(cpuDataIn),
+                .oEdb(cpuDataOut),
+                .eab(  cpu_addr_o)
+                );
+
+	wire  [2:0] fc_o;
+
+        wire        wr_o;
+        wire        as_o;
+        wire [23:1] cpu_addr_o;
+
+	assign cpuAddr = {cpu_addr_o,1'b0};
+	assign cpu_busstate  = as_o ? 2'b01 : ~{wr_o,wr_o};
+	assign _cpuRW = wr_o;
+
+`else
+
 TG68KdotC_Kernel #(0,0,0,0,0,0) m68k
 (
 	.clk            ( clk_sys        ),
 	.nReset         ( _cpuReset      ),
-	.clkena_in      ( cpu_clkena     ), 
+	.clkena_in      ( cpu_clkena     ),
 	.data_in        ( cpuDataIn      ),
 	.IPL            ( _cpuIPL        ),
 	.IPL_autovector ( 1'b1           ),
@@ -320,6 +396,8 @@ TG68KdotC_Kernel #(0,0,0,0,0,0) m68k
 	.nResetOut      ( _cpuResetOut   ),
 	.FC             (                )
 );
+
+`endif
 
 assign VGA_R = {8{pixelOut}};
 assign VGA_G = {8{pixelOut}};

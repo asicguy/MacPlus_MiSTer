@@ -1,4 +1,5 @@
 set_global_assignment -name QIP_FILE src/tg68k/TG68K.qip
+set_global_assignment -name QIP_FILE src/FX68K/fx68k.qip
 set_global_assignment -name SYSTEMVERILOG_FILE src/sdram.sv
 set_global_assignment -name VERILOG_FILE src/scsi.v
 set_global_assignment -name VERILOG_FILE src/ncr5380.v

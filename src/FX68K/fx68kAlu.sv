@@ -7,10 +7,6 @@
 // ALU
 //
 
-// altera message_off 10230
-// altera message_off 10763
-// altera message_off 10958
-
 `timescale 1 ns / 1 ns
 
 localparam MASK_NBITS = 5;
@@ -797,7 +793,7 @@ module ccrTable(
 			row[5],
 			row[10],							// SUBX/NEGX
 			row[12]:	ccrMask = CUPDALL;		// ADDX
-
+			
 			row[6],								// CMP
 			row[7],								// MUL		
 			row[11]:	ccrMask = KNZVC;		// NOT

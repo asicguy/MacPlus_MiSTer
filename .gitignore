@@ -28,7 +28,6 @@ build_id.v
 c5_pin_model_dump.txt
 *.sopcinfo
 *.csv
-*.f
 *.cmp
 *.sip
 *.spd
@@ -37,3 +36,7 @@ c5_pin_model_dump.txt
 *.xml
 *_netlist
 *.cdf
+csrc
+simv.daidir
+simv
+

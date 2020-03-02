@@ -250,7 +250,7 @@ module emu
   hps_io
     #
     (
-     .STRLEN              ($size(CONF_STR)>>3),
+     .STRLEN              ($bits(CONF_STR)>>3), // was $size?
      .VDNUM               (2)
      )
   hps_io
@@ -290,7 +290,46 @@ module emu
      .ps2_kbd_led_status  ({2'b00, capslock}),
 
      .ps2_mouse           (ps2_mouse),
-     .uart_mode           (16'b000_11111_000_11111) // AJS - is this correct
+     .uart_mode           (16'b000_11111_000_11111), // AJS - is this correct
+     .joystick_0          (),
+     .joystick_1          (),
+     .joystick_2          (),
+     .joystick_3          (),
+     .joystick_4          (),
+     .joystick_5          (),
+     .joystick_analog_0   (),
+     .joystick_analog_1   (),
+     .joystick_analog_2   (),
+     .joystick_analog_3   (),
+     .joystick_analog_4   (),
+     .joystick_analog_5   (),
+     .forced_scandoubler  (),
+     .direct_video        (),
+     .status_in           ('0),
+     .status_set          ('0),
+     .status_menumask     ('0),
+     .info_req            ('0),
+     .info                ('0),
+     .new_vmode           ('0),
+     .img_readonly        (),
+     .img_size            (),
+     .sd_ack_conf         (),
+     .ioctl_file_ext      (),
+     .sdram_sz            (),
+     .RTC                 (),
+     .TIMESTAMP           (),
+     .cd_in               ('0),
+     .cd_out              (),
+     .ps2_kbd_clk_out     (),
+     .ps2_kbd_data_out    (),
+     .ps2_kbd_clk_in      ('0),
+     .ps2_kbd_data_in     ('0),
+     .ps2_mouse_clk_out   (),
+     .ps2_mouse_data_out  (),
+     .ps2_mouse_clk_in    ('0),
+     .ps2_mouse_data_in   ('0),
+     .ps2_mouse_ext       (),
+     .gamma_bus           ('0)
      );
 
   wire  [1:0] cpu_busstate;
@@ -410,15 +449,15 @@ assign VGA_F1 = 0;
 assign VGA_SL = 0;
 reg  [1:0] configRAMSize= 3;
 
-wire screenWrite;
-always @(*) begin
-        case(configRAMSize)
-                0:	screenWrite = ~_ramWE && &memoryAddr[16:15]; // 01A700 (018000)
-                1:	screenWrite = ~_ramWE && &memoryAddr[18:15]; // 07A700 (078000)
-                2:	screenWrite = ~_ramWE && &memoryAddr[19:15]; // 0FA700 (0F8000)
-                3:	screenWrite = ~_ramWE && &memoryAddr[21:15]; // 3FA700 (3F8000)
-        endcase
-end
+  logic    screenWrite;
+  always_comb begin
+    case(configRAMSize)
+      0:	screenWrite = ~_ramWE && &memoryAddr[16:15]; // 01A700 (018000)
+      1:	screenWrite = ~_ramWE && &memoryAddr[18:15]; // 07A700 (078000)
+      2:	screenWrite = ~_ramWE && &memoryAddr[19:15]; // 0FA700 (0F8000)
+      3:	screenWrite = ~_ramWE && &memoryAddr[21:15]; // 3FA700 (3F8000)
+    endcase
+  end
 
 video video
 (

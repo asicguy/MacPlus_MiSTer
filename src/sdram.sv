@@ -29,7 +29,7 @@
 module sdram
   (
         output            sd_clk,
-        inout reg [15:0]  sd_data, // 16 bit bidirectional data bus
+        inout [15:0]      sd_data, // 16 bit bidirectional data bus
         output reg [12:0] sd_addr, // 13 bit multiplexed address bus
         output [1:0]      sd_dqm, // two byte masks
         output reg [1:0]  sd_ba, // two banks
@@ -60,6 +60,10 @@ module sdram
 
   localparam MODE = { 3'b000, NO_WRITE_BURST, OP_MODE, CAS_LATENCY, ACCESS_TYPE, BURST_LENGTH};
 
+  logic                   sd_dout_en;
+  logic [15:0]            sd_dout;
+
+  assign sd_data  = sd_dout_en ? sd_dout : 'z;
 
 // ---------------------------------------------------------------------
 // ------------------------ cycle state machine ------------------------
@@ -114,67 +118,71 @@ assign sd_dqm = sd_addr[12:11];
 reg  [1:0] mode;
 reg [15:0] din_r;
 
-always @(posedge clk) begin
-        reg [12:0] addr_r;
-        reg        old_sync;
+  always @(posedge clk) begin
+    reg [12:0] addr_r;
+    reg        old_sync;
 
-        sd_data <= 16'hZZZZ;
+    sd_dout_en <= '0;
+    sd_dout    <= '0;
 
-        if(|stage) stage <= stage + 1'd1;
+    if(|stage) stage <= stage + 1'd1;
 
-        old_sync <= sync;
-        if(~old_sync & sync) stage <= 1;
+    old_sync <= sync;
+    if(~old_sync & sync) stage <= 1;
 
-        sd_cmd <= CMD_NOP;  // default: idle
+    sd_cmd <= CMD_NOP;  // default: idle
 
-        if(reset != 0) begin
-                // initialization takes place at the end of the reset phase
-                if(stage == STATE_CMD_START) begin
+    if(reset != 0) begin
+      // initialization takes place at the end of the reset phase
+      if(stage == STATE_CMD_START) begin
 
-                        if(reset == 13) begin
-                                sd_cmd <= CMD_PRECHARGE;
-                                sd_addr[10] <= 1'b1;      // precharge all banks
-                        end
-
-                        if(reset == 2) begin
-                                sd_cmd <= CMD_LOAD_MODE;
-                                sd_addr <= MODE;
-                        end
-
-                end
-                mode    <= 0;
-        end else begin
-
-                // normal operation
-                if(stage == STATE_CMD_START) begin
-                        if(we || oe) begin
-
-                                mode <= {we, oe};
-
-                                // RAS phase
-                                sd_cmd  <= CMD_ACTIVE;
-                                sd_addr <= { 1'b0, addr[19:8] };
-                                sd_ba   <= addr[21:20];
-
-                                din_r   <= din;
-                                addr_r  <= {we ? ~ds : 2'b00, 2'b10, addr[22], addr[7:0] };  // auto precharge
-                        end
-                        else begin
-                                sd_cmd <= CMD_AUTO_REFRESH;
-                                mode <= 0;
-                        end
-                end
-
-                // CAS phase
-                if(stage == STATE_CMD_CONT && mode) begin
-                        sd_cmd  <= mode[1] ? CMD_WRITE : CMD_READ;
-                        sd_addr <= addr_r;
-                        if(mode[1]) sd_data <= din_r;
-                end
-
-                if(stage == STATE_READ && mode[0]) dout <= sd_data;
+        if(reset == 13) begin
+          sd_cmd <= CMD_PRECHARGE;
+          sd_addr[10] <= 1'b1;      // precharge all banks
         end
-end
+
+        if(reset == 2) begin
+          sd_cmd <= CMD_LOAD_MODE;
+          sd_addr <= MODE;
+        end
+
+      end
+      mode    <= 0;
+    end else begin
+
+      // normal operation
+      if(stage == STATE_CMD_START) begin
+        if(we || oe) begin
+
+          mode <= {we, oe};
+
+          // RAS phase
+          sd_cmd  <= CMD_ACTIVE;
+          sd_addr <= { 1'b0, addr[19:8] };
+          sd_ba   <= addr[21:20];
+
+          din_r   <= din;
+          addr_r  <= {we ? ~ds : 2'b00, 2'b10, addr[22], addr[7:0] };  // auto precharge
+        end
+        else begin
+          sd_cmd <= CMD_AUTO_REFRESH;
+          mode <= 0;
+        end
+      end
+
+      // CAS phase
+      if(stage == STATE_CMD_CONT && mode) begin
+        sd_cmd  <= mode[1] ? CMD_WRITE : CMD_READ;
+        sd_addr <= addr_r;
+        if(mode[1]) begin
+          sd_dout_en <= '1;
+          sd_dout    <= din_r;
+        end
+      end
+
+      if(stage == STATE_READ && mode[0]) dout <= sd_data;
+    end
+  end
 
 altddio_out
 #(
@@ -198,7 +206,8 @@ sdramclk_ddr
         .oe(1'b1),
         .outclocken(1'b1),
         .sclr(1'b0),
-        .sset(1'b0)
+        .sset(1'b0),
+        .oe_out ()
 );
 
 endmodule

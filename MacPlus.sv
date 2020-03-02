@@ -351,7 +351,6 @@ module emu
    if (!clkdiv) phi1 <= 1'b1;
    else phi2 <= 1'b1;
 end
-   */
   always @(posedge cep ) begin
     clkdiv <= !clkdiv;
     phi1 <= 1'b0;
@@ -360,9 +359,26 @@ end
     if (!clkdiv) phi1 <= 1'b1;
     else phi2 <= 1'b1;
   end
-  (*keep*) wire fx68k_clk = cep;
-  (*keep*) wire fx68k_phi1 = phi1;
-  (*keep*) wire fx68k_phi2 = phi2;
+   */
+  initial begin
+    phi1  = '0;
+    phi2  = '0;
+  end
+  always @(posedge clk_sys) begin
+    if (cep) begin
+      phi1 <= '1;
+      phi2 <= '0;
+    end else if (phi1) begin
+      phi1 <= '0;
+      phi2 <= '1;
+    end else begin
+      phi1 <= '0;
+      phi2 <= '0;
+    end
+  end
+  (*keep*) wire fx68k_clk   = clk_sys;
+  (*keep*) wire fx68k_phi1  = phi1;
+  (*keep*) wire fx68k_phi2  = phi2;
   wire  [2:0] fc_o;
   wire        wr_o;
   wire        as_o;

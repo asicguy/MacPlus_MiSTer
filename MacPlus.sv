@@ -130,6 +130,13 @@ module emu
 
   logic          clk_sys;
   logic          pll_locked;
+  logic [24:0]   sdram_addr;
+  logic [15:0]   sdram_din;
+  logic [1:0]    sdram_ds;
+  logic          sdram_we;
+  logic          sdram_oe;
+  logic [15:0]   sdram_out;
+  logic          cep;
 
   // Clocks
   pll pll
@@ -140,115 +147,142 @@ module emu
      //.outclk_1    (clk_sys_2),
      .locked        (pll_locked)
      );
-MacPlus_subsys
-  #
-  (
-   .DELAY           (DELAY),
-   .RESET_BITS      (RESET_BITS)
-   )
+
+  MacPlus_subsys
+    #
+    (
+     .DELAY           (DELAY),
+     .RESET_BITS      (RESET_BITS)
+     )
   u0
-  (
-   //Master input clock -- From PLL at the top level
-   .clk_sys         (clk_sys),
-   .pll_locked      (pll_locked),
+    (
+     //Master input clock -- From PLL at the top level
+     .clk_sys         (clk_sys),
+     .pll_locked      (pll_locked),
 
-   //Async reset from top-level module.
-   //Can be used as initial reset.
-   .RESET           (RESET),
+     //Async reset from top-level module.
+     //Can be used as initial reset.
+     .RESET           (RESET),
 
-   //Must be passed to hps_io module
-   .HPS_BUS         (HPS_BUS),
+     //Must be passed to hps_io module
+     .HPS_BUS         (HPS_BUS),
 
-   //Base video clock. Usually equals to CLK_SYS.
-   .CLK_VIDEO       (CLK_VIDEO),
+     //Base video clock. Usually equals to CLK_SYS.
+     .CLK_VIDEO       (CLK_VIDEO),
 
-   //Multiple resolutions are supported using different CE_PIXEL rates.
-   //Must be based on CLK_VIDEO
-   .CE_PIXEL        (CE_PIXEL),
+     //Multiple resolutions are supported using different CE_PIXEL rates.
+     //Must be based on CLK_VIDEO
+     .CE_PIXEL        (CE_PIXEL),
 
-   //Video aspect ratio for HDMI. Most retro systems have ratio 4:3.
-   .VIDEO_ARX       (VIDEO_ARX),
-   .VIDEO_ARY       (VIDEO_ARY),
+     //Video aspect ratio for HDMI. Most retro systems have ratio 4:3.
+     .VIDEO_ARX       (VIDEO_ARX),
+     .VIDEO_ARY       (VIDEO_ARY),
 
-   .VGA_R           (VGA_R),
-   .VGA_G           (VGA_G),
-   .VGA_B           (VGA_B),
-   .VGA_HS          (VGA_HS),
-   .VGA_VS          (VGA_VS),
-   .VGA_DE          (VGA_DE), // = ~(VBlank | HBlank)
-   .VGA_F1          (VGA_F1),
-   .VGA_SL          (VGA_SL),
+     .VGA_R           (VGA_R),
+     .VGA_G           (VGA_G),
+     .VGA_B           (VGA_B),
+     .VGA_HS          (VGA_HS),
+     .VGA_VS          (VGA_VS),
+     .VGA_DE          (VGA_DE), // = ~(VBlank | HBlank)
+     .VGA_F1          (VGA_F1),
+     .VGA_SL          (VGA_SL),
 
-   .LED_USER        (LED_USER), // 1 - ON, 0 - OFF.
+     .LED_USER        (LED_USER), // 1 - ON, 0 - OFF.
 
-   // b[1]: 0 - LED status is system status OR'd with b[0]
-   //       1 - LED status is controled solely by b[0]
-   // hint: supply 2'b00 to let the system control the LED.
-   .LED_POWER       (LED_POWER),
-   .LED_DISK        (LED_DISK),
+     // b[1]: 0 - LED status is system status OR'd with b[0]
+     //       1 - LED status is controled solely by b[0]
+     // hint: supply 2'b00 to let the system control the LED.
+     .LED_POWER       (LED_POWER),
+     .LED_DISK        (LED_DISK),
 
-   // I/O board button press simulation (active high)
-   // b[1]: user button
-   // b[0]: osd button
-   .BUTTONS         (BUTTONS),
+     // I/O board button press simulation (active high)
+     // b[1]: user button
+     // b[0]: osd button
+     .BUTTONS         (BUTTONS),
 
-   .AUDIO_L         (AUDIO_L),
-   .AUDIO_R         (AUDIO_R),
-   .AUDIO_S         (AUDIO_S), // 1 - signed audio samples, 0 - unsigned
-   .AUDIO_MIX       (AUDIO_MIX), // 0 - no mix, 1 - 25%, 2 - 50%, 3 - 100% (mono)
+     .AUDIO_L         (AUDIO_L),
+     .AUDIO_R         (AUDIO_R),
+     .AUDIO_S         (AUDIO_S), // 1 - signed audio samples, 0 - unsigned
+     .AUDIO_MIX       (AUDIO_MIX), // 0 - no mix, 1 - 25%, 2 - 50%, 3 - 100% (mono)
 
-   //ADC
-   .ADC_BUS         (ADC_BUS),
+     //ADC
+     .ADC_BUS         (ADC_BUS),
 
-   //SD-SPI
-   .SD_SCK          (SD_SCK),
-   .SD_MOSI         (SD_MOSI),
-   .SD_MISO         (SD_MISO),
-   .SD_CS           (SD_CS),
-   .SD_CD           (SD_CD),
+     //SD-SPI
+     .SD_SCK          (SD_SCK),
+     .SD_MOSI         (SD_MOSI),
+     .SD_MISO         (SD_MISO),
+     .SD_CS           (SD_CS),
+     .SD_CD           (SD_CD),
 
-   //High latency DDR3 RAM interface
-   //Use for non-critical time purposes
-   .DDRAM_CLK       (DDRAM_CLK),
-   .DDRAM_BUSY      (DDRAM_BUSY),
-   .DDRAM_BURSTCNT  (DDRAM_BURSTCNT),
-   .DDRAM_ADDR      (DDRAM_ADDR),
-   .DDRAM_DOUT      (DDRAM_DOUT),
-   .DDRAM_DOUT_READY(DDRAM_DOUT_READY),
-   .DDRAM_RD        (DDRAM_RD),
-   .DDRAM_DIN       (DDRAM_DIN),
-   .DDRAM_BE        (DDRAM_BE),
-   .DDRAM_WE        (DDRAM_WE),
+     //High latency DDR3 RAM interface
+     //Use for non-critical time purposes
+     .DDRAM_CLK       (DDRAM_CLK),
+     .DDRAM_BUSY      (DDRAM_BUSY),
+     .DDRAM_BURSTCNT  (DDRAM_BURSTCNT),
+     .DDRAM_ADDR      (DDRAM_ADDR),
+     .DDRAM_DOUT      (DDRAM_DOUT),
+     .DDRAM_DOUT_READY(DDRAM_DOUT_READY),
+     .DDRAM_RD        (DDRAM_RD),
+     .DDRAM_DIN       (DDRAM_DIN),
+     .DDRAM_BE        (DDRAM_BE),
+     .DDRAM_WE        (DDRAM_WE),
 
-   //SDRAM interface with lower latency
-   .SDRAM_CLK       (SDRAM_CLK),
-   .SDRAM_CKE       (SDRAM_CKE),
-   .SDRAM_A         (SDRAM_A),
-   .SDRAM_BA        (SDRAM_BA),
-   .SDRAM_DQ        (SDRAM_DQ),
-   .SDRAM_DQML      (SDRAM_DQML),
-   .SDRAM_DQMH      (SDRAM_DQMH),
-   .SDRAM_nCS       (SDRAM_nCS),
-   .SDRAM_nCAS      (SDRAM_nCAS),
-   .SDRAM_nRAS      (SDRAM_nRAS),
-   .SDRAM_nWE       (SDRAM_nWE),
+     //SDRAM interface with lower latency
+     .sdram_addr      (sdram_addr),
+     .sdram_din       (sdram_din),
+     .sdram_ds        (sdram_ds),
+     .sdram_we        (sdram_we),
+     .sdram_oe        (sdram_oe),
+     .sdram_out       (sdram_out),
+     .cep             (cep),
 
-   .UART_CTS        (UART_CTS),
-   .UART_RTS        (UART_RTS),
-   .UART_RXD        (UART_RXD),
-   .UART_TXD        (UART_TXD),
-   .UART_DTR        (UART_DTR),
-   .UART_DSR        (UART_DSR),
+     .UART_CTS        (UART_CTS),
+     .UART_RTS        (UART_RTS),
+     .UART_RXD        (UART_RXD),
+     .UART_TXD        (UART_TXD),
+     .UART_DTR        (UART_DTR),
+     .UART_DSR        (UART_DSR),
 
-   // Open-drain User port.
-   // 0 - D+/RX
-   // 1 - D-/TX
-   // 2..6 - USR2..USR6
-   // Set USER_OUT to 1 to read from USER_IN.
-   .USER_IN         (USER_IN),
-   .USER_OUT        (USER_OUT),
+     // Open-drain User port.
+     // 0 - D+/RX
+     // 1 - D-/TX
+     // 2..6 - USR2..USR6
+     // Set USER_OUT to 1 to read from USER_IN.
+     .USER_IN         (USER_IN),
+     .USER_OUT        (USER_OUT),
 
-   .OSD_STATUS      (OSD_STATUS)
-   );
+     .OSD_STATUS      (OSD_STATUS)
+     );
+
+  assign SDRAM_CKE = 1;
+
+  // Need to pull out the ddr IO
+  sdram sdram
+    (
+     // system interface
+     .init    ( !pll_locked ),
+     .clk     ( clk_sys     ),
+     .sync    ( cep         ),
+
+     .sd_clk  ( SDRAM_CLK   ),
+     .sd_data ( SDRAM_DQ    ),
+     .sd_addr ( SDRAM_A     ),
+     .sd_dqm  ( {SDRAM_DQMH, SDRAM_DQML} ),
+     .sd_cs   ( SDRAM_nCS   ),
+     .sd_ba   ( SDRAM_BA    ),
+     .sd_we   ( SDRAM_nWE   ),
+     .sd_ras  ( SDRAM_nRAS  ),
+     .sd_cas  ( SDRAM_nCAS  ),
+
+        // cpu/chipset interface
+     // map rom to sdram word address $200000 - $20ffff
+     .din     ( sdram_din   ),
+     .addr    ( sdram_addr  ),
+     .ds      ( sdram_ds    ),
+     .we      ( sdram_we    ),
+     .oe      ( sdram_oe    ),
+     .dout    ( sdram_out   )
+     );
 
 endmodule // emu

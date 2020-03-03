@@ -98,18 +98,14 @@ module MacPlus_subsys
    output [7:0]  DDRAM_BE,
    output        DDRAM_WE,
 
-   //SDRAM interface with lower latency
-   output        SDRAM_CLK,
-   output        SDRAM_CKE,
-   output [12:0] SDRAM_A,
-   output [1:0]  SDRAM_BA,
-   inout [15:0]  SDRAM_DQ,
-   output        SDRAM_DQML,
-   output        SDRAM_DQMH,
-   output        SDRAM_nCS,
-   output        SDRAM_nCAS,
-   output        SDRAM_nRAS,
-   output        SDRAM_nWE,
+   //SDRAM interface with lower latency - cpu interface
+   output [24:0] sdram_addr,
+   output [15:0] sdram_din,
+   output [1:0]  sdram_ds,
+   output        sdram_we,
+   output        sdram_oe,
+   input [15:0]  sdram_out,
+   output logic  cep,
 
    input         UART_CTS,
    output        UART_RTS,
@@ -147,7 +143,7 @@ module MacPlus_subsys
                          "V,v",`BUILD_DATE
                          };
 
-  logic          cep,cen,cel,cepix;
+  logic          cen,cel,cepix;
   logic [2:0]    div;
 
   initial begin
@@ -541,7 +537,6 @@ wire dsk_ext_ins = dsk_ext_ds || dsk_ext_ss;
 
 // "extra rom" is used to hold the disk image. It's expected to be byte wide and
 // we thus need to properly demultiplex the word returned from sdram in that case
-wire [15:0] sdram_out;
 wire [15:0] extra_rom_data_demux = memoryAddr[0]? {sdram_out[7:0],sdram_out[7:0]}:{sdram_out[15:8],sdram_out[15:8]};
 
 // disk images are being stored right after os rom at word offset 0x80000 and 0x100000
@@ -553,12 +548,13 @@ wire [20:0] dio_a =
 // sdram used for ram/rom maps directly into 68k address space
 wire download_cycle = dio_download && dioBusControl;
 
-wire [24:0] sdram_addr = download_cycle ? { 4'b0001, dio_a[20:0] } : { 3'b000, ~_romOE, memoryAddr[21:1] };
-wire [15:0] sdram_din  = download_cycle ? dio_data : memoryDataOut;
-wire  [1:0] sdram_ds   = download_cycle ? 2'b11 : { !_memoryUDS, !_memoryLDS };
-wire        sdram_we   = download_cycle ? dio_write : !_ramWE;
-wire        sdram_oe   = download_cycle ? 1'b0 : (!_ramOE || !_romOE);
-wire [15:0] sdram_do   = download_cycle ? 16'hffff : (dskReadAckInt || dskReadAckExt) ? extra_rom_data_demux : sdram_out;
+  assign sdram_addr = download_cycle ? { 4'b0001, dio_a[20:0] } : { 3'b000, ~_romOE, memoryAddr[21:1] };
+  assign sdram_din  = download_cycle ? dio_data : memoryDataOut;
+  assign sdram_ds   = download_cycle ? 2'b11 : { !_memoryUDS, !_memoryLDS };
+  assign sdram_we   = download_cycle ? dio_write : !_ramWE;
+  assign sdram_oe   = download_cycle ? 1'b0 : (!_ramOE || !_romOE);
+  logic [15:0] sdram_do;
+  assign sdram_do   = download_cycle ? 16'hffff : (dskReadAckInt || dskReadAckExt) ? extra_rom_data_demux : sdram_out;
 
   dataController_top
     #
@@ -698,8 +694,6 @@ end
 
 ////////////////////////// SDRAM /////////////////////////////////
 
-assign SDRAM_CKE = 1;
-
 reg real_turbo = 0;
 
 addrController_top ac0
@@ -739,35 +733,6 @@ addrController_top ac0
         .dskReadAddrExt(dskReadAddrExt),
         .dskReadAckExt(dskReadAckExt)
 );
-
-  // Need to pull out the ddr IO
-sdram sdram
-(
-        // system interface
-        .init    ( !pll_locked ),
-        .clk     ( clk_sys     ),
-        .sync    ( cep         ),
-
-        .sd_clk  ( SDRAM_CLK   ),
-        .sd_data ( SDRAM_DQ    ),
-        .sd_addr ( SDRAM_A     ),
-        .sd_dqm  ( {SDRAM_DQMH, SDRAM_DQML} ),
-        .sd_cs   ( SDRAM_nCS   ),
-        .sd_ba   ( SDRAM_BA    ),
-        .sd_we   ( SDRAM_nWE   ),
-        .sd_ras  ( SDRAM_nRAS  ),
-        .sd_cas  ( SDRAM_nCAS  ),
-
-        // cpu/chipset interface
-        // map rom to sdram word address $200000 - $20ffff
-        .din     ( sdram_din   ),
-        .addr    ( sdram_addr  ),
-        .ds      ( sdram_ds    ),
-        .we      ( sdram_we    ),
-        .oe      ( sdram_oe    ),
-        .dout    ( sdram_out   )
-);
-
 
 //////////////////////// TURBO HANDLING //////////////////////////
 

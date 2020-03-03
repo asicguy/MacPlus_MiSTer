@@ -103,43 +103,65 @@ end
 endmodule
 
 module vram
-(
-        input           clock,
+  #
+  (
+   parameter INFER_RAM = 1
+   )
+  (
+   input         clock,
 
-        input    [15:0] data,
-        input    [13:0] wraddress,
-        input     [1:0] byteena_a,
-        input           wren,
+   input [15:0]  data,
+   input [13:0]  wraddress,
+   input [1:0]   byteena_a,
+   input         wren,
 
-        input    [13:0] rdaddress,
-        output [15:0] q
-);
+   input [13:0]  rdaddress,
+   output logic [15:0] q
+   );
 
-altsyncram	altsyncram_component (
-                        .address_a (wraddress),
-                        .address_b (rdaddress),
-                        .byteena_a (byteena_a),
-                        .clock0 (clock),
-                        .data_a (data),
-                        .wren_a (wren),
-                        .q_b (q),
-                        .aclr0 (1'b0),
-                        .aclr1 (1'b0),
-                        .addressstall_a (1'b0),
-                        .addressstall_b (1'b0),
-                        .byteena_b (1'b1),
-                        .clock1 (1'b1),
-                        .clocken0 (1'b1),
-                        .clocken1 (1'b1),
-                        .clocken2 (1'b1),
-                        .clocken3 (1'b1),
-                        .data_b ({16{1'b1}}),
-                        .eccstatus (),
-                        .q_a (),
-                        .rden_a (1'b1),
-                        .rden_b (1'b1),
-                        .wren_b (1'b0));
-defparam
+  generate
+    if (INFER_RAM == 1) begin : g_INFER_RAM
+      // use a multi-dimensional packed array
+      //to model individual bytes within the word
+      logic [1:0][7:0]    ram[0:16384];// # words = 1 << address width
+
+      // Infer RAM from Altera Recommended HDL coding styles
+      always_ff @(posedge clock) begin
+        if (wren) begin
+          if (byteena_a[0]) ram[wraddress][0] <= data[7:0];
+          if (byteena_a[1]) ram[wraddress][1] <= data[15:8];
+        end
+        q <= ram[rdaddress];
+      end
+
+    end else begin : g_INSTANTIATE
+
+      altsyncram	altsyncram_component
+        (
+         .address_a (wraddress),
+         .address_b (rdaddress),
+         .byteena_a (byteena_a),
+         .clock0 (clock),
+         .data_a (data),
+         .wren_a (wren),
+         .q_b (q),
+         .aclr0 (1'b0),
+         .aclr1 (1'b0),
+         .addressstall_a (1'b0),
+         .addressstall_b (1'b0),
+         .byteena_b (1'b1),
+         .clock1 (1'b1),
+         .clocken0 (1'b1),
+         .clocken1 (1'b1),
+         .clocken2 (1'b1),
+         .clocken3 (1'b1),
+         .data_b ({16{1'b1}}),
+         .eccstatus (),
+         .q_a (),
+         .rden_a (1'b1),
+         .rden_b (1'b1),
+         .wren_b (1'b0));
+      defparam
         altsyncram_component.address_aclr_b = "NONE",
         altsyncram_component.address_reg_b = "CLOCK0",
         altsyncram_component.byte_size = 8,
@@ -160,6 +182,7 @@ defparam
         altsyncram_component.width_a = 16,
         altsyncram_component.width_b = 16,
         altsyncram_component.width_byteena_a = 2;
-
+    end // block: g_INSTANTIATE
+  endgenerate
 
 endmodule

@@ -230,6 +230,11 @@ reg [31:0] ps2_key_raw = 0;
 wire       pressed  = (ps2_key_raw[15:8] != 8'hf0);
 wire       extended = (~pressed ? (ps2_key_raw[23:16] == 8'he0) : (ps2_key_raw[15:8] == 8'he0));
 
+  initial begin
+    status  = '0;
+    cfg     = '0;
+  end
+
 always@(posedge clk_sys) begin
         reg [15:0] cmd;
         reg  [2:0] b_wr;

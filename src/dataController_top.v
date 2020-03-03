@@ -1,107 +1,112 @@
-module dataController_top(
-        // clocks:
-        input clk,
-        input cep,
-        input cen,
+module dataController_top
+  #
+  (
+   parameter DELAY = 20'hFFFFF // For builds in hardware
+   )
+  (
+   // clocks:
+   input             clk,
+   input             cep,
+   input             cen,
 
-        // system control:
-        input _systemReset,
+   // system control:
+   input             _systemReset,
 
-        // 68000 CPU control:
-        output _cpuReset,
-        output [2:0] _cpuIPL,
+   // 68000 CPU control:
+   output            _cpuReset,
+   output [2:0]      _cpuIPL,
 
-        // 68000 CPU memory interface:
-        input [15:0] cpuDataIn,
-        input [3:0] cpuAddrRegHi, // A12-A9
-        input [2:0] cpuAddrRegMid, // A6-A4
-        input [1:0] cpuAddrRegLo, // A2-A1
-        input _cpuUDS,
-        input _cpuLDS,
-        input _cpuRW,
-        output reg [15:0] cpuDataOut,
+   // 68000 CPU memory interface:
+   input [15:0]      cpuDataIn,
+   input [3:0]       cpuAddrRegHi, // A12-A9
+   input [2:0]       cpuAddrRegMid, // A6-A4
+   input [1:0]       cpuAddrRegLo, // A2-A1
+   input             _cpuUDS,
+   input             _cpuLDS,
+   input             _cpuRW,
+   output reg [15:0] cpuDataOut,
 
-        // peripherals:
-        input selectSCSI,
-        input selectSCC,
-        input selectIWM,
-        input selectVIA,
+   // peripherals:
+   input             selectSCSI,
+   input             selectSCC,
+   input             selectIWM,
+   input             selectVIA,
 
-        // RAM/ROM:
-        input cpuBusControl,
-        input [15:0] memoryDataIn,
-        output [15:0] memoryDataOut,
+   // RAM/ROM:
+   input             cpuBusControl,
+   input [15:0]      memoryDataIn,
+   output [15:0]     memoryDataOut,
 
-        // keyboard:
-        input [10:0] ps2_key,
-        output       capslock,
+   // keyboard:
+   input [10:0]      ps2_key,
+   output            capslock,
 
-        // mouse:
-        input [24:0] ps2_mouse,
+   // mouse:
+   input [24:0]      ps2_mouse,
 
-        // serial:
-        input   rxd,
-        output  txd,
-        input   cts,
-        /* normally wired to device DTR output
-                                * on Mac cables. That same line is also
-                                * connected to the TRxC input of the SCC
-                                * to do fast clocking but we don't do that
-                                * here
-                                */
-        output  rts, /* on a real mac this activates line*/
+   // serial:
+   input             rxd,
+   output            txd,
+   input             cts,
+   /* normally wired to device DTR output
+    * on Mac cables. That same line is also
+    * connected to the TRxC input of the SCC
+    * to do fast clocking but we don't do that
+    * here
+    */
+   output            rts, /* on a real mac this activates line*/
 
-        // video:
-        input _hblank,
-        input _vblank,
+   // video:
+   input             _hblank,
+   input             _vblank,
 
-        // audio
-        output [10:0] audioOut,  // 8 bit audio + 3 bit volume
-        output snd_alt,
-        input loadSound,
+   // audio
+   output [10:0]     audioOut, // 8 bit audio + 3 bit volume
+   output            snd_alt,
+   input             loadSound,
 
-        // misc
-        output memoryOverlayOn,
-        input [1:0] insertDisk,
-        input [1:0] diskSides,
-        output [1:0] diskEject,
+   // misc
+   output            memoryOverlayOn,
+   input [1:0]       insertDisk,
+   input [1:0]       diskSides,
+   output [1:0]      diskEject,
 
-        output [1:0] diskMotor,
-        output [1:0] diskAct,
+   output [1:0]      diskMotor,
+   output [1:0]      diskAct,
 
-        output [21:0] dskReadAddrInt,
-        input dskReadAckInt,
-        output [21:0] dskReadAddrExt,
-        input dskReadAckExt,
+   output [21:0]     dskReadAddrInt,
+   input             dskReadAckInt,
+   output [21:0]     dskReadAddrExt,
+   input             dskReadAckExt,
 
-        // connections to io controller
-        input   [1:0] img_mounted,
+   // connections to io controller
+   input [1:0]       img_mounted,
 
-        output [15:0] io_req_type,
-   output [31:0] io_lba,
-   output  [1:0] io_rd,
-   output  [1:0] io_wr,
+   output [15:0]     io_req_type,
+   output [31:0]     io_lba,
+   output [1:0]      io_rd,
+   output [1:0]      io_wr,
    input             io_ack,
 
-        input   [8:0] sd_buff_addr,
-        input   [7:0] sd_buff_dout,
-        output  [7:0] sd_buff_din,
-        input         sd_buff_wr
+   input [8:0]       sd_buff_addr,
+   input [7:0]       sd_buff_dout,
+   output [7:0]      sd_buff_din,
+   input             sd_buff_wr
 );
 
-  wire [7:0]          kbd_in_data;
-  wire                kbd_in_strobe;
-  wire [7:0]          kbd_out_data;
-  wire                kbd_out_strobe;
+  wire [7:0]         kbd_in_data;
+  wire               kbd_in_strobe;
+  wire [7:0]         kbd_out_data;
+  wire               kbd_out_strobe;
 
   // add binary volume levels according to volume setting
-  wire [2:0]          snd_vol;
-  reg [10:0]          audio_latch;
-  wire                snd_ena;
-assign audioOut =
-        (snd_vol[0] ? audio_latch    : 11'd0) +
-        (snd_vol[1] ? audio_latch<<1 : 11'd0) +
-        (snd_vol[2] ? audio_latch<<2 : 11'd0);
+  wire [2:0]         snd_vol;
+  reg [10:0]         audio_latch;
+  wire               snd_ena;
+  assign audioOut =
+                   (snd_vol[0] ? audio_latch    : 11'd0) +
+                   (snd_vol[1] ? audio_latch<<1 : 11'd0) +
+                   (snd_vol[2] ? audio_latch<<2 : 11'd0);
 
 always @(posedge clk) begin
         reg loadSoundD;
@@ -117,20 +122,20 @@ end
 reg [19:0] resetDelay; // 20 bits = 1 million
 wire isResetting = resetDelay != 0;
 
-initial begin
-        // force a reset when the FPGA configuration is completed
-        resetDelay <= 20'hFFFFF;
-end
+  initial begin
+    // force a reset when the FPGA configuration is completed
+    resetDelay = DELAY;
+  end
 
-always @(posedge clk or negedge _systemReset) begin
-        if (_systemReset == 1'b0) begin
-                resetDelay <= 20'hFFFFF;
-        end
-        else if(cep && isResetting) begin
-                resetDelay <= resetDelay - 1'b1;
-        end
-end
-assign _cpuReset = isResetting ? 1'b0 : 1'b1;
+  always @(posedge clk or negedge _systemReset) begin
+    if (_systemReset == 1'b0) begin
+      resetDelay <= DELAY;
+    end
+    else if(cep && isResetting) begin
+      resetDelay <= resetDelay - 1'b1;
+    end
+  end
+  assign _cpuReset = isResetting ? 1'b0 : 1'b1;
 
 // interconnects
 wire SEL;

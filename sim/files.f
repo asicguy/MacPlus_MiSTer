@@ -14,4 +14,6 @@
 -y ../sys
 -y ../sys/pll
 //pll.sv
+../MacPlus_subsys.sv
 ../MacPlus.sv
+./tb.sv

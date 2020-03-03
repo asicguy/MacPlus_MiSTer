@@ -215,19 +215,6 @@ module emu
      .SD_CS           (SD_CS),
      .SD_CD           (SD_CD),
 
-     //High latency DDR3 RAM interface
-     //Use for non-critical time purposes
-     .DDRAM_CLK       (DDRAM_CLK),
-     .DDRAM_BUSY      (DDRAM_BUSY),
-     .DDRAM_BURSTCNT  (DDRAM_BURSTCNT),
-     .DDRAM_ADDR      (DDRAM_ADDR),
-     .DDRAM_DOUT      (DDRAM_DOUT),
-     .DDRAM_DOUT_READY(DDRAM_DOUT_READY),
-     .DDRAM_RD        (DDRAM_RD),
-     .DDRAM_DIN       (DDRAM_DIN),
-     .DDRAM_BE        (DDRAM_BE),
-     .DDRAM_WE        (DDRAM_WE),
-
      //SDRAM interface with lower latency
      .sdram_addr      (sdram_addr),
      .sdram_din       (sdram_din),
@@ -254,6 +241,8 @@ module emu
 
      .OSD_STATUS      (OSD_STATUS)
      );
+
+  assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = 0;
 
   assign SDRAM_CKE = 1;
 

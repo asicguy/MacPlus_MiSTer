@@ -85,19 +85,6 @@ module MacPlus_subsys
    output        SD_CS,
    input         SD_CD,
 
-   //High latency DDR3 RAM interface
-   //Use for non-critical time purposes
-   output        DDRAM_CLK,
-   input         DDRAM_BUSY,
-   output [7:0]  DDRAM_BURSTCNT,
-   output [28:0] DDRAM_ADDR,
-   input [63:0]  DDRAM_DOUT,
-   input         DDRAM_DOUT_READY,
-   output        DDRAM_RD,
-   output [63:0] DDRAM_DIN,
-   output [7:0]  DDRAM_BE,
-   output        DDRAM_WE,
-
    //SDRAM interface with lower latency - cpu interface
    output [24:0] sdram_addr,
    output [15:0] sdram_din,
@@ -759,7 +746,6 @@ end
   assign USER_OUT = '1;
   //assign {UART_RTS, UART_TXD, UART_DTR} = 0;
   assign { UART_DTR} = 0;
-  assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = 0;
   assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 
   assign LED_USER  = dio_download || (disk_act ^ |diskMotor);

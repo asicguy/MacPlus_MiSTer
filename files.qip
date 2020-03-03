@@ -13,7 +13,8 @@ set_global_assignment -name VERILOG_FILE src/via.v
 set_global_assignment -name VERILOG_FILE src/addrDecoder.v
 set_global_assignment -name VERILOG_FILE src/addrController_top.v
 set_global_assignment -name VERILOG_FILE src/dataController_top.v
-set_global_assignment -name VERILOG_FILE src/video.v
+set_global_assignment -name SYSTEMVERILOG_FILE src/video.sv
 set_global_assignment -name VERILOG_FILE src/uart/txuart.v
 set_global_assignment -name VERILOG_FILE src/uart/rxuart.v
+set_global_assignment -name SYSTEMVERILOG_FILE MacPlus_subsys.sv
 set_global_assignment -name SYSTEMVERILOG_FILE MacPlus.sv

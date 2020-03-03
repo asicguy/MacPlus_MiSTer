@@ -330,7 +330,7 @@ module MacPlus_subsys
      .ps2_mouse_clk_in    ('0),
      .ps2_mouse_data_in   ('0),
      .ps2_mouse_ext       (),
-     .gamma_bus           ('0)
+     .gamma_bus           ()
      );
 
   wire  [1:0] cpu_busstate;

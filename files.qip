@@ -11,7 +11,7 @@ set_global_assignment -name VERILOG_FILE src/scc.v
 set_global_assignment -name VERILOG_FILE src/iwm.v
 set_global_assignment -name VERILOG_FILE src/via.v
 set_global_assignment -name VERILOG_FILE src/addrDecoder.v
-set_global_assignment -name VERILOG_FILE src/addrController_top.v
+set_global_assignment -name SYSTEMVERILOG_FILE src/addrController_top.sv
 set_global_assignment -name VERILOG_FILE src/dataController_top.v
 set_global_assignment -name SYSTEMVERILOG_FILE src/video.sv
 set_global_assignment -name VERILOG_FILE src/uart/txuart.v

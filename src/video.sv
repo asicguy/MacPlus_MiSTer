@@ -1,104 +1,111 @@
 module video
-(
-        input        clk,
-        input            ce,
+  (
+   input        clk,
+   input        ce,
 
-        input [14:0] addr,
-        input [15:0] dataIn,
-        input  [1:0] wr,
+   input [14:0] addr,
+   input [15:0] dataIn,
+   input [1:0]  wr,
 
-        output reg   hsync,
-        output reg   vsync,
-        output       _hblank,
-        output       _vblank,
+   output reg   hsync,
+   output reg   vsync,
+   output       _hblank,
+   output       _vblank,
 
-        output       video_en,
-        output       pixelOut
-);
+   output       video_en,
+   output       pixelOut
+   );
 
-localparam      kVisibleWidth = 128,
-                                kTotalWidth = 176,
-                                kVisibleHeightStart = 21,
-                                kVisibleHeightEnd = 362,
-                                kTotalHeight = 370,
-                                kHsyncStart = 135,
-                                kHsyncEnd = 152,
-                                kVsyncStart = 365,
-                                kVsyncEnd = 369,
-                                kPixelLatency = 1; // number of clk8 cycles from xpos==0 to when pixel data actually exits the video shift register
+  localparam kVisibleWidth       = 128;
+  localparam kTotalWidth         = 176;
+  localparam kVisibleHeightStart = 21;
+  localparam kVisibleHeightEnd   = 362;
+  localparam kTotalHeight        = 370;
+  localparam kHsyncStart         = 135;
+  localparam kHsyncEnd           = 152;
+  localparam kVsyncStart         = 365;
+  localparam kVsyncEnd           = 369;
+  localparam kPixelLatency       = 1; // number of clk8 cycles from xpos==0 to when pixel data actually exits the video shift register
 
-localparam      videoStart = 'hA700 - (kVisibleHeightStart * kVisibleWidth/2);
+  localparam videoStart          = 'hA700 - (kVisibleHeightStart * kVisibleWidth/2);
 
-reg [7:0] xpos;
-reg [9:0] ypos;
+  logic [7:0]   xpos;
+  logic [9:0]   ypos;
 
-assign _hblank = ~(xpos >= kVisibleWidth);
-assign _vblank = ~(ypos < kVisibleHeightStart || ypos > kVisibleHeightEnd);
+  assign _hblank = ~(xpos >= kVisibleWidth);
+  assign _vblank = ~(ypos < kVisibleHeightStart || ypos > kVisibleHeightEnd);
 
-wire [15:0] scrData;
-reg ram_wr;
-vram buff
-(
-        .clock(clk),
+  logic [15:0]  scrData;
+  logic         ram_wr;
+  logic         old_wr;
 
-        .data(dataIn),
-        .wraddress(addr[13:0]),
-        .byteena_a(wr),
-        .wren(ram_wr),
 
-        .rdaddress(videoStart[14:1] + {ypos[8:0], xpos[6:2]}),
-        .q(scrData)
-);
+  vram buff
+    (
+     .clock        (clk),
 
-always @(posedge clk) begin
-        reg old_wr;
+     .data         (dataIn),
+     .wraddress    (addr[13:0]),
+     .byteena_a    (wr),
+     .wren         (ram_wr),
 
-        old_wr <= |wr;
-        ram_wr <= (~old_wr & |wr);
-end
+     .rdaddress    (videoStart[14:1] + {ypos[8:0], xpos[6:2]}),
+     .q            (scrData)
+     );
 
-reg [3:0] cycle;
-always @(posedge clk) if(ce) cycle <= cycle + 1'd1;
+  always @(posedge clk) begin
+    old_wr <= |wr;
+    ram_wr <= (~old_wr & |wr);
+  end
 
-always @(posedge clk) begin
-        if(ce && !cycle[1:0]) begin
-                if (xpos == kTotalWidth-1) begin
-                        xpos <= 0;
-                        if (ypos == kTotalHeight-1) ypos <= 0;
-                                else ypos <= ypos + 1'b1;
-                end else if (!xpos && cycle) begin
-                        xpos <= 0;
-                end else begin
-                        xpos <= xpos + 1'b1;
-                end
+  logic [3:0] cycle;
+  initial begin
+    cycle  = '0;
+    xpos   = '0;
+    ypos   = '0;
+  end
 
-                if(xpos == kHsyncStart+kPixelLatency) begin
-                        hsync <= 1;
-                        vsync <= (ypos >= kVsyncStart && ypos <= kVsyncEnd);
-                end
-                if(xpos == kHsyncEnd+kPixelLatency) hsync <= 0;
-        end
-end
+  always @(posedge clk) if(ce) cycle <= cycle + 1'd1;
 
-// a 0 bit is white, and a 1 bit is black
-// data is shifted out MSB first
-reg [15:0] shiftRegister;
-reg [15:0] paper;
-assign pixelOut = ~shiftRegister[15];
-assign video_en = paper[15];
+  always @(posedge clk) begin
+    if(ce && !cycle[1:0]) begin
+      if (xpos == kTotalWidth-1) begin
+        xpos <= 0;
+        if (ypos == kTotalHeight-1) ypos <= 0;
+        else ypos <= ypos + 1'b1;
+      end else if (!xpos && cycle) begin
+        xpos <= 0;
+      end else begin
+        xpos <= xpos + 1'b1;
+      end
 
-always @(posedge clk) begin
-        if(ce) begin
-                if(_vblank && _hblank && cycle == 2) begin
-                        shiftRegister <= scrData;
-                        paper <= 16'hFFFF;
-                end
-                else begin
-                        shiftRegister <= { shiftRegister[14:0], 1'b1 };
-                        paper <= { paper[14:0], 1'b0 };
-                end
-        end
-end
+      if(xpos == kHsyncStart+kPixelLatency) begin
+        hsync <= 1;
+        vsync <= (ypos >= kVsyncStart && ypos <= kVsyncEnd);
+      end
+      if(xpos == kHsyncEnd+kPixelLatency) hsync <= 0;
+    end
+  end
+
+  // a 0 bit is white, and a 1 bit is black
+  // data is shifted out MSB first
+  logic [15:0] shiftRegister;
+  logic [15:0] paper;
+  assign pixelOut = ~shiftRegister[15];
+  assign video_en = paper[15];
+
+  always @(posedge clk) begin
+    if(ce) begin
+      if(_vblank && _hblank && cycle == 2) begin
+        shiftRegister <= scrData;
+        paper <= 16'hFFFF;
+      end
+      else begin
+        shiftRegister <= { shiftRegister[14:0], 1'b1 };
+        paper <= { paper[14:0], 1'b0 };
+      end
+    end
+  end
 
 endmodule
 

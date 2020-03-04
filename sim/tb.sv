@@ -114,16 +114,16 @@ module tb;
   // SDRAM model
   initial begin
     r1 = $fopen("boot.rom","rb");
-    c1 = $fread(memory,r1,2097152); // map rom to sdram word address $200000 - $20ffff
+    c1 = $fread(memory,r1,2097152*2); // map rom to sdram word address $200000 - $20ffff
   end
 
   always @(posedge clk_sys) begin
     if (sdram_we) begin
-      if (sdram_ds[0]) memory[sdram_addr]   <= sdram_din[7:0];
-      if (sdram_ds[1]) memory[sdram_addr+1] <= sdram_din[15:8];
+      if (sdram_ds[0]) memory[{sdram_addr, 1'b0}] <= sdram_din[7:0];
+      if (sdram_ds[1]) memory[{sdram_addr, 1'b1}] <= sdram_din[15:8];
     end
     //if (sdram_oe) begin
-      sdram_out <= {memory[sdram_addr+1], memory[sdram_addr]};
+      sdram_out <= {memory[{sdram_addr, 1'b1}], memory[{sdram_addr, 1'b0}]};
     //end
   end
 

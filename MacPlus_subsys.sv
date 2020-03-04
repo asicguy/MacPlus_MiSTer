@@ -316,53 +316,17 @@ module MacPlus_subsys
      .gamma_bus           ()
      );
 
-  wire  [1:0] cpu_busstate;
-  wire        cpu_clkena = cep && (cpuBusControl || (cpu_busstate == 2'b01));
-  reg [15:0]  cpuDataIn;
+  logic [1:0] cpu_busstate;
+  logic       cpu_clkena;
+  logic       cpu_clkenb;
+  logic [15:0] cpuDataIn;
 
+  assign cpu_clkena = cep && (cpuBusControl || (cpu_busstate == 2'b01));
+  assign cpu_clkenb = cen && (cpuBusControl || (cpu_busstate == 2'b01));
   always @(posedge clk_sys) if(cel && cpuBusControl && ~cpu_busstate[0] && _cpuRW) cpuDataIn <= dataControllerDataOut;
 
-`define NEWCPU
+//`define NEWCPU
 `ifdef NEWCPU
-  reg         clkdiv;
-  reg         phi1;
-  reg         phi2;
-  /* always @(posedge clk_sys) begin
-   clkdiv <= !clkdiv;
-   phi1 <= 1'b0;
-   phi2 <= 1'b0;
-
-   if (!clkdiv) phi1 <= 1'b1;
-   else phi2 <= 1'b1;
-end
-  always @(posedge cep ) begin
-    clkdiv <= !clkdiv;
-    phi1 <= 1'b0;
-    phi2 <= 1'b0;
-
-    if (!clkdiv) phi1 <= 1'b1;
-    else phi2 <= 1'b1;
-  end
-   */
-  initial begin
-    phi1  = '0;
-    phi2  = '0;
-  end
-  always @(posedge clk_sys) begin
-    if (cep) begin
-      phi1 <= '1;
-      phi2 <= '0;
-    end else if (phi1) begin
-      phi1 <= '0;
-      phi2 <= '1;
-    end else begin
-      phi1 <= '0;
-      phi2 <= '0;
-    end
-  end
-  (*keep*) wire fx68k_clk   = clk_sys;
-  (*keep*) wire fx68k_phi1  = phi1;
-  (*keep*) wire fx68k_phi2  = phi2;
   wire  [2:0] fc_o;
   wire        wr_o;
   wire        as_o;
@@ -378,8 +342,8 @@ end
      .oRESETn(_cpuResetOut),
      .oHALTEDn (),
 
-     .enPhi1(fx68k_phi1),
-     .enPhi2(fx68k_phi2),
+     .enPhi1(cpu_clkena),
+     .enPhi2(cpu_clkenb),
 
      .eRWn(wr_o),
      .ASn(as_o),
@@ -461,20 +425,20 @@ reg  [1:0] configRAMSize= 3;
 
   video video
     (
-     .clk(clk_sys),
-     .ce(cepix),
+     .clk        (clk_sys),
+     .ce         (cepix),
 
-     .addr(cpuAddr[15:1]),
-     .dataIn(cpuDataOut),
-     .wr({~_cpuUDS & screenWrite, ~_cpuLDS & screenWrite}),
+     .addr       (cpuAddr[15:1]),
+     .dataIn     (cpuDataOut),
+     .wr         ({~_cpuUDS & screenWrite, ~_cpuLDS & screenWrite}),
 
-     ._hblank(_hblank),
-     ._vblank(_vblank),
+     ._hblank    (_hblank),
+     ._vblank    (_vblank),
 
-     .hsync(VGA_HS),
-     .vsync(VGA_VS),
-     .video_en(VGA_DE),
-     .pixelOut(pixelOut)
+     .hsync      (VGA_HS),
+     .vsync      (VGA_VS),
+     .video_en   (VGA_DE),
+     .pixelOut   (pixelOut)
      );
 
 wire [10:0] audio;

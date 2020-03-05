@@ -98,11 +98,11 @@ module video
     if(ce) begin
       if(_vblank && _hblank && cycle == 2) begin
         shiftRegister <= scrData;
-        paper <= 16'hFFFF;
+        paper         <= '1;
       end
       else begin
         shiftRegister <= { shiftRegister[14:0], 1'b1 };
-        paper <= { paper[14:0], 1'b0 };
+        paper         <= { paper[14:0], 1'b0 };
       end
     end
   end

@@ -325,7 +325,7 @@ module MacPlus_subsys
   assign cpu_clkenb = cen && (cpuBusControl || (cpu_busstate == 2'b01));
   always @(posedge clk_sys) if(cel && cpuBusControl && ~cpu_busstate[0] && _cpuRW) cpuDataIn <= dataControllerDataOut;
 
-//`define NEWCPU
+`define NEWCPU
 `ifdef NEWCPU
   wire  [2:0] fc_o;
   wire        wr_o;
@@ -334,7 +334,7 @@ module MacPlus_subsys
 
   fx68k FX68K
     (
-     .clk(fx68k_clk),
+     .clk(clk_sys),
      .HALTn (1'b1), // Unused
      .extReset(~_cpuReset),
      .pwrUp(~_cpuReset),

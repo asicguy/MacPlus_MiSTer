@@ -119,11 +119,11 @@ module tb;
 
   always @(posedge clk_sys) begin
     if (sdram_we) begin
-      if (sdram_ds[0]) memory[{sdram_addr, 1'b0}] <= sdram_din[7:0];
-      if (sdram_ds[1]) memory[{sdram_addr, 1'b1}] <= sdram_din[15:8];
+      if (sdram_ds[0]) memory[{sdram_addr, 1'b1}] <= sdram_din[7:0];
+      if (sdram_ds[1]) memory[{sdram_addr, 1'b0}] <= sdram_din[15:8];
     end
     //if (sdram_oe) begin
-      sdram_out <= {memory[{sdram_addr, 1'b1}], memory[{sdram_addr, 1'b0}]};
+      sdram_out <= {memory[{sdram_addr, 1'b0}], memory[{sdram_addr, 1'b1}]};
     //end
   end
 

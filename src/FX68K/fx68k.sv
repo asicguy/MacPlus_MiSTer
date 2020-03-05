@@ -602,7 +602,7 @@ module fx68k(
                 if( Clks.pwrUp)
                         ftu <= '0;
                 else if( enT3) begin
-                        unique case( 1'b1)
+                        case( 1'b1)
                         Nanod.tvn2Ftu:				ftu <= tvnMux;
 
                         // 0 on unused bits seem to come from ftuConst PLA previously clearing FBUS
@@ -941,7 +941,7 @@ module irdDecode( input [15:0] ird,
         // rx is A or D
         // movem
         always_comb begin
-                unique case( 1'b1)
+                case( 1'b1)
                 lineOnehot[1],
                 lineOnehot[2],
                 lineOnehot[3]:
@@ -991,7 +991,7 @@ module irdDecode( input [15:0] ird,
                 // On most cases RY is Areg expect if mode is 000 (DATA REG) or 111 (IMM, ABS,PC REL)
                 eaIsAreg = (ird[5:3] != 3'b000) & (ird[5:3] != 3'b111);
 
-                unique case( 1'b1)
+                case( 1'b1)
                                 // MOVE: RY always Areg expect if mode is 000 (DATA REG) or 111 (IMM, ABS,PC REL)
                                 // Most lines, including misc line 4, also.
                 default:		Irdecod.ryIsAreg = eaIsAreg;
@@ -1015,7 +1015,7 @@ module irdDecode( input [15:0] ird,
         wire xIsScc = (ird[7:6] == 2'b11) & (ird[5:3] != 3'b001);
         wire xStaticMem = (ird[11:8] == 4'b1000) & (ird[5:4] == 2'b00);		// Static bit to mem
         always_comb begin
-                unique case( 1'b1)
+                case( 1'b1)
                 lineOnehot[0]:
                                 Irdecod.isByte =
                                 ( ird[8] & (ird[5:4] != 2'b00)					) |	// Dynamic bit to mem
@@ -1050,7 +1050,7 @@ module irdDecode( input [15:0] ird,
         // But doesn't matter as long as they don't perform any RX transfer.
 
         always_comb begin
-                unique case( 1'b1)
+                case( 1'b1)
                 lineOnehot[6]:		Irdecod.implicitSp = (ird[11:8] == 4'b0001);		// BSR
                 lineOnehot[4]:
                         // Misc like RTS, JSR, etc
@@ -1072,7 +1072,7 @@ module irdDecode( input [15:0] ird,
         wire [3:0] zero28 = (ird[11:9] == 0) ? 4'h8 : { 1'b0, ird[11:9]};		// xltate 0,1-7 into 8,1-7
 
         always_comb begin
-                unique case( 1'b1)
+                case( 1'b1)
                 lineOnehot[6],														// Bcc short
                 lineOnehot[7]:		ftuConst = { { 8{ ird[ 7]}}, ird[ 7:0] };		// MOVEQ
 
@@ -1312,7 +1312,7 @@ localparam REG_DT = 17;
                 {abhIdle, ablIdle, abdIdle} = '0;
                 {dbhIdle, dblIdle, dbdIdle} = '0;
 
-                unique case( 1'b1)
+                case( 1'b1)
                 ryl2Dbd:				dbdMux = regs68L[ actualRy];
                 rxl2Dbd:				dbdMux = regs68L[ actualRx];
                 Nanod.alue2Dbd:			dbdMux = alue;
@@ -1322,7 +1322,7 @@ localparam REG_DT = 17;
                 default: begin			dbdMux = 'X;	dbdIdle = 1'b1;				end
                 endcase
 
-                unique case( 1'b1)
+                case( 1'b1)
                 rxl2Dbl:				dblMux = regs68L[ actualRx];
                 ryl2Dbl:				dblMux = regs68L[ actualRy];
                 Nanod.ftu2Dbl:			dblMux = ftu;
@@ -1332,7 +1332,7 @@ localparam REG_DT = 17;
                 default: begin			dblMux = 'X;	dblIdle = 1'b1;				end
                 endcase
 
-                unique case( 1'b1)
+                case( 1'b1)
                 Nanod.rxh2dbh:			dbhMux = regs68H[ actualRx];
                 Nanod.ryh2dbh:			dbhMux = regs68H[ actualRy];
                 Nanod.au2Db:			dbhMux = auReg[31:16];
@@ -1341,7 +1341,7 @@ localparam REG_DT = 17;
                 default: begin			dbhMux = 'X;	dbhIdle = 1'b1;				end
                 endcase
 
-                unique case( 1'b1)
+                case( 1'b1)
                 ryl2Abd:				abdMux = regs68L[ actualRy];
                 rxl2Abd:				abdMux = regs68L[ actualRx];
                 Nanod.dbin2Abd:			abdMux = dbin;
@@ -1349,7 +1349,7 @@ localparam REG_DT = 17;
                 default: begin			abdMux = 'X;	abdIdle = 1'b1;				end
                 endcase
 
-                unique case( 1'b1)
+                case( 1'b1)
                 Pcl2Abl:				ablMux = PcL;
                 rxl2Abl:				ablMux = regs68L[ actualRx];
                 ryl2Abl:				ablMux = regs68L[ actualRy];
@@ -1360,7 +1360,7 @@ localparam REG_DT = 17;
                 default: begin			ablMux = 'X;	ablIdle = 1'b1;				end
                 endcase
 
-                unique case( 1'b1)
+                case( 1'b1)
                 Pch2Abh:				abhMux = PcH;
                 Nanod.rxh2abh:			abhMux = regs68H[ actualRx];
                 Nanod.ryh2abh:			abhMux = regs68H[ actualRy];
@@ -1463,7 +1463,7 @@ localparam REG_DT = 17;
         // always @( Nanod.auCntrl) begin
 
         always_comb begin
-                unique case( Nanod.auCntrl)
+                case( Nanod.auCntrl)
                 3'b000:		auInpMux = 0;
                 3'b001:		auInpMux = byteNotSpAlign | Nanod.noSpAlign ? 1 : 2;		// +1/+2
                 3'b010:		auInpMux = -4;
@@ -1650,7 +1650,7 @@ localparam REG_DT = 17;
         wire dobIdle = (~| Nanod.dobCtrl);
 
         always_comb begin
-                unique case (Nanod.dobCtrl)
+                case (Nanod.dobCtrl)
                 NANO_DOB_ADB:		dobInput = Abd;
                 NANO_DOB_DBD:		dobInput = Dbd;
                 NANO_DOB_ALU:		dobInput = aluOut;
@@ -1807,7 +1807,7 @@ module uaddrDecode(
         function [3:0] eaDecode;
         input [5:0] eaBits;
         begin
-        unique case( eaBits[ 5:3])
+        case( eaBits[ 5:3])
         3'b111:
                 case( eaBits[ 2:0])
                 3'b000:   eaDecode = 7;            // Absolute short
@@ -1836,7 +1836,7 @@ module uaddrDecode(
         */
 
         always_comb begin
-                unique case( lineBmap)
+                case( lineBmap)
 
                 // ori/andi/eori SR
                 'h01:   isPriv = ((opcode & 16'hf5ff) == 16'h007c);
@@ -1984,7 +1984,7 @@ module sequencer( input s_clks Clks, input enT3,
         wire [4:0] cbc = microLatch[ 6:2];			// CBC bits
 
         always_comb begin
-                unique case( cbc)
+                case( cbc)
                 'h0:    c0c1 = {i11, i11};						// W/L offset EA, from IRC
 
                 'h1:    c0c1 = (au05z) ? 2'b01 : 2'b11;			// Updated on T3
@@ -2056,7 +2056,7 @@ module sequencer( input s_clks Clks, input enT3,
 
         // CCR conditional
         always_comb begin
-                unique case( Ird[ 11:8])
+                case( Ird[ 11:8])
                 'h0: ccTest = 1'b1;						// T
                 'h1: ccTest = 1'b0;						// F
                 'h2: ccTest = ~psw[ CF] & ~psw[ ZF];	// HI
@@ -2132,7 +2132,7 @@ module sequencer( input s_clks Clks, input enT3,
                         grp1Nma = ITLX1_NMA;
                 end
                 else begin
-                        unique case( 1'b1)					// Can't happen more than one of these
+                        case( 1'b1)					// Can't happen more than one of these
                         rIllegal:			tvn = 4;
                         rPriv:				tvn = 8;
                         rLineA:				tvn = 10;
@@ -2212,7 +2212,7 @@ module busArbiter( input s_clks Clks,
 
         logic granting;
         always_comb begin
-                unique case( next)
+                case( next)
                 D1, D3, D_BR, D_BRA:	granting = 1'b1;
                 default:				granting = 1'b0;
                 endcase

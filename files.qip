@@ -9,7 +9,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE src/ps2_kbd.sv
 set_global_assignment -name VERILOG_FILE src/ps2_mouse.v
 set_global_assignment -name VERILOG_FILE src/scc.v
 set_global_assignment -name VERILOG_FILE src/iwm.v
-set_global_assignment -name VERILOG_FILE src/via.v
+set_global_assignment -name SYSTEMVERILOG_FILE src/via.sv
 set_global_assignment -name VERILOG_FILE src/addrDecoder.v
 set_global_assignment -name SYSTEMVERILOG_FILE src/addrController_top.sv
 set_global_assignment -name VERILOG_FILE src/dataController_top.v

@@ -321,9 +321,13 @@ module MacPlus_subsys
   logic       cpu_clkenb;
   logic [15:0] cpuDataIn;
 
-  assign cpu_clkena = cep && (cpuBusControl || (cpu_busstate == 2'b01));
-  assign cpu_clkenb = cen && (cpuBusControl || (cpu_busstate == 2'b01));
-  always @(posedge clk_sys) if(cel && cpuBusControl && ~cpu_busstate[0] && _cpuRW) cpuDataIn <= dataControllerDataOut;
+  //assign cpu_clkena = cep && (cpuBusControl || (cpu_busstate == 2'b01));
+  //assign cpu_clkenb = cen && (cpuBusControl || (cpu_busstate == 2'b01));
+  //always @(posedge clk_sys) if(cel && cpuBusControl && ~cpu_busstate[0] && _cpuRW) cpuDataIn <= dataControllerDataOut;
+
+  assign cpu_clkena = cep && (cpuBusControl);
+  assign cpu_clkenb = cen && (cpuBusControl);
+  always @(posedge clk_sys) if(cel && cpuBusControl && _cpuRW) cpuDataIn <= dataControllerDataOut;
 
 `define NEWCPU
 `ifdef NEWCPU

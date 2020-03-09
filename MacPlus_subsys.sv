@@ -187,7 +187,7 @@ module MacPlus_subsys
   wire [1:0]  diskMotor, diskAct, diskEject;
 
   // the status register is controlled by the on screen display (OSD)
-  wire [31:0] status;
+  wire [63:0] status;
   wire [1:0]  buttons;
   wire [1:0]  img_mounted;
   wire [15:0] sd_req_type;
@@ -208,7 +208,7 @@ module MacPlus_subsys
   wire [24:0] ps2_mouse;
   wire        capslock;
 
-  wire [24:0] ioctl_addr;
+  wire [26:0] ioctl_addr;
   wire [7:0]  ioctl_data;
   reg [15:0]  dio_data;
 
@@ -255,7 +255,7 @@ module MacPlus_subsys
      .sd_wr               (sd_wr),
      .sd_ack              (sd_ack),
 
-     .sd_conf             (0),
+     .sd_conf             ('0),
      .sd_buff_addr        (sd_buff_addr),
      .sd_buff_dout        (sd_buff_dout),
      .sd_buff_din         (sd_buff_din),
@@ -393,16 +393,20 @@ module MacPlus_subsys
      .IPL            ( _cpuIPL        ),
      .IPL_autovector ( 1'b1           ),
      .berr           ( 1'b0           ),
-     .clr_berr       ( 1'b0           ),
+     .clr_berr       (                ),
      .CPU            ( 2'b00          ),   // 00=68000
-     .addr           ( {cpuAddrHi, cpuAddr} ),
+     .addr_out       ( {cpuAddrHi, cpuAddr} ),
      .data_write     ( cpuDataOut     ),
      .nUDS           ( _cpuUDS        ),
      .nLDS           ( _cpuLDS        ),
      .nWr            ( _cpuRW         ),
      .busstate       ( cpu_busstate   ), // 00-> fetch code 10->read data 11->write data 01->no memaccess
      .nResetOut      ( _cpuResetOut   ),
-     .FC             (                )
+     .FC             (                ),
+     .skipFetch      (                ),
+     .regin_out      (                ),
+     .CACR_out       (                ),
+     .VBR_out        (                )
      );
 
 `endif
@@ -662,7 +666,7 @@ addrController_top ac0
         ._cpuLDS(_cpuLDS),
         ._cpuRW(_cpuRW),
         .turbo(real_turbo),
-        .configROMSize(1), // 128KB
+        .configROMSize(1'b1), // 128KB
         .configRAMSize(configRAMSize),
         .memoryAddr(memoryAddr),
         ._memoryUDS(_memoryUDS),

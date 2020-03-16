@@ -178,21 +178,30 @@ assign forced_scandoubler = cfg[4];
 //cfg[5] - ypbpr handled in sys_top
 assign direct_video = cfg[10];
 
+  logic [3:0] sd_wr_int;
+  logic [3:0] sd_rd_int;
+  always_comb begin
+    sd_wr_int           = '0;
+    sd_wr_int[VD:0]     = sd_wr[VD:0];
+    sd_rd_int           = '0;
+    sd_rd_int[VD:0]     = sd_rd[VD:0];
+  end
+
 // command byte read by the io controller
-wire [15:0] sd_cmd =
+    wire [15:0] sd_cmd  =
 {
         2'b00,
-        (VDNUM>=4) ? sd_wr[3] : 1'b0,
-        (VDNUM>=3) ? sd_wr[2] : 1'b0,
-        (VDNUM>=2) ? sd_wr[1] : 1'b0,
+        (VDNUM>=4) ? sd_wr_int[3] : 1'b0,
+        (VDNUM>=3) ? sd_wr_int[2] : 1'b0,
+        (VDNUM>=2) ? sd_wr_int[1] : 1'b0,
 
-        (VDNUM>=4) ? sd_rd[3] : 1'b0,
-        (VDNUM>=3) ? sd_rd[2] : 1'b0,
-        (VDNUM>=2) ? sd_rd[1] : 1'b0,
+        (VDNUM>=4) ? sd_rd_int[3] : 1'b0,
+        (VDNUM>=3) ? sd_rd_int[2] : 1'b0,
+        (VDNUM>=2) ? sd_rd_int[1] : 1'b0,
 
         4'h5, sd_conf, 1'b1,
-        sd_wr[0],
-        sd_rd[0]
+        sd_wr_int[0],
+        sd_rd_int[0]
 };
 
 /////////////////////////////////////////////////////////

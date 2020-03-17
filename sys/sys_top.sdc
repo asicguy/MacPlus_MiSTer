@@ -2,7 +2,7 @@
 create_clock -period "50.0 MHz" [get_ports FPGA_CLK1_50]
 create_clock -period "50.0 MHz" [get_ports FPGA_CLK2_50]
 create_clock -period "50.0 MHz" [get_ports FPGA_CLK3_50]
-create_clock -period "100.0 MHz" [get_pins -compatibility_mode *|h2f_user0_clk] 
+create_clock -period "100.0 MHz" [get_pins -compatibility_mode *|h2f_user0_clk]
 create_clock -period "100.0 MHz" [get_pins -compatibility_mode spi|sclk_out] -name spi_sck
 
 derive_pll_clocks
@@ -46,3 +46,6 @@ set_false_path -to   {FB_BASE[*] FB_BASE[*] FB_WIDTH[*] FB_HEIGHT[*] FB_HMIN[*] 
 set_false_path -from {FB_BASE[*] FB_BASE[*] FB_WIDTH[*] FB_HEIGHT[*] FB_HMIN[*] FB_HMAX[*] FB_VMIN[*] FB_VMAX[*]}
 set_false_path -to   {vol_att[*] scaler_flt[*] led_overtake[*] led_state[*]}
 set_false_path -from {vol_att[*] scaler_flt[*] led_overtake[*] led_state[*]}
+
+set_multicycle_path -from {emu:emu|MacPlus_subsys:u0|TG68KdotC_Kernel:m68k|*} -setup 4
+set_multicycle_path -from {emu:emu|MacPlus_subsys:u0|TG68KdotC_Kernel:m68k|*} -hold 3

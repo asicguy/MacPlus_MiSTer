@@ -133,6 +133,14 @@ module MacPlus_subsys
   logic          cen,cel,cepix;
   logic [2:0]    div;
 
+  logic [1:0] cpu_busstate;
+  logic       cpu_clkena;
+  logic       cpu_clkenb;
+  logic [15:0] cpuDataIn;
+
+  //assign cpu_clkena = cep && (cpuBusControl || (cpu_busstate == 2'b01));
+  //assign cpu_clkenb = cen && (cpuBusControl || (cpu_busstate == 2'b01));
+
   initial begin
     div   = '0;
 
@@ -143,12 +151,14 @@ module MacPlus_subsys
   end
   always @(posedge clk_sys) begin
 
-    div <= div + 1'd1;
+    div        <= div + 1'd1;
 
-    cep   <= (div == 0);
-    cen   <= (div == 4);
-    cel   <= (div == 7);
-    cepix <= !div[1:0];
+    cep        <= (div == 0);
+    cen        <= (div == 4);
+    cel        <= (div == 7);
+    cepix      <= !div[1:0];
+    cpu_clkena <= (div == 0) & (cpuBusControl | (cpu_busstate == 2'b01));
+    cpu_clkenb <= (div == 4) & (cpuBusControl | (cpu_busstate == 2'b01));
   end
 
   ///////////////////////////////////////////////////
@@ -316,20 +326,13 @@ module MacPlus_subsys
      .gamma_bus           ()
      );
 
-  logic [1:0] cpu_busstate;
-  logic       cpu_clkena;
-  logic       cpu_clkenb;
-  logic [15:0] cpuDataIn;
+  always @(posedge clk_sys) if(cel && cpuBusControl && ~cpu_busstate[0] && _cpuRW) cpuDataIn <= dataControllerDataOut;
 
-  //assign cpu_clkena = cep && (cpuBusControl || (cpu_busstate == 2'b01));
-  //assign cpu_clkenb = cen && (cpuBusControl || (cpu_busstate == 2'b01));
-  //always @(posedge clk_sys) if(cel && cpuBusControl && ~cpu_busstate[0] && _cpuRW) cpuDataIn <= dataControllerDataOut;
+  //assign cpu_clkena = cep && (cpuBusControl);
+  //assign cpu_clkenb = cen && (cpuBusControl);
+  //always @(posedge clk_sys) if(cel && cpuBusControl && _cpuRW) cpuDataIn <= dataControllerDataOut;
 
-  assign cpu_clkena = cep && (cpuBusControl);
-  assign cpu_clkenb = cen && (cpuBusControl);
-  always @(posedge clk_sys) if(cel && cpuBusControl && _cpuRW) cpuDataIn <= dataControllerDataOut;
-
-`define NEWCPU
+//`define NEWCPU
 `ifdef NEWCPU
   wire  [2:0] fc_o;
   wire        wr_o;
@@ -356,7 +359,7 @@ module MacPlus_subsys
      .E (),
      .VMAn (),
 
-     .BGn(1'b1),
+     .BGn(),
      .BRn(1'b1),
      .BGACKn(1'b1),
 
